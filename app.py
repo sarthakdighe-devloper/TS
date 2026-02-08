@@ -59,7 +59,7 @@ def set_bg_image(image_file):
     st.markdown(bg_style, unsafe_allow_html=True)
 
 # ✅ FIXED PATH
-set_bg_image(r"bg.jpg")
+set_bg_image(r"C:\Users\dighe\OneDrive\Desktop\env\bg.jpg")
 
 # ---------------- PDF TEXT EXTRACTION ----------------
 def extract_text_from_pdf(uploaded_file):
@@ -115,3 +115,4 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
+
