@@ -3,3 +3,4 @@ pdfplumber
 python-dotenv
 transformers
 torch
+python-3.11
