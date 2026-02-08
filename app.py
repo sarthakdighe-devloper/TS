@@ -7,22 +7,24 @@ from transformers import pipeline
 
 # ---------------- LOAD ENV VARIABLES ----------------
 load_dotenv()
-hf_token = os.getenv("HF_TOKEN")
+hf_token = os.getenv("HF_TOKEN")  # optional
 
 # ---------------- LOAD SUMMARIZER (CACHED) ----------------
 @st.cache_resource(show_spinner=False)
 def load_summarizer():
     return pipeline(
         "summarization",
-        model="facebook/bart-large-cnn",
-        token=hf_token,   # ✅ updated
-        device=-1         # ✅ CPU safe
+        model="sshleifer/distilbart-cnn-12-6",  # lighter model for deployment
+        device=-1
     )
 
 summarizer = load_summarizer()
 
 # ---------------- FUNCTION TO SET BACKGROUND IMAGE ----------------
 def set_bg_image(image_file):
+    if not os.path.exists(image_file):
+        return
+
     with open(image_file, "rb") as img:
         encoded = base64.b64encode(img.read()).decode()
 
@@ -58,8 +60,9 @@ def set_bg_image(image_file):
     """
     st.markdown(bg_style, unsafe_allow_html=True)
 
-# ✅ FIXED PATH
-set_bg_image(r"C:\Users\dighe\OneDrive\Desktop\env\bg.jpg")
+
+# Background image from project folder
+set_bg_image("bg.jpg")
 
 # ---------------- PDF TEXT EXTRACTION ----------------
 def extract_text_from_pdf(uploaded_file):
@@ -71,16 +74,21 @@ def extract_text_from_pdf(uploaded_file):
                 text += extracted + "\n"
     return text if text.strip() else None
 
+
 # ---------------- TEXT CLEAN + LIMIT SIZE ----------------
 def clean_text(text, max_chars=3000):
     text = text.replace("\n", " ")
     return text[:max_chars]
 
+
 # ---------------- STREAMLIT UI ----------------
 st.markdown("<h1>Indian Legal Document Summarizer</h1>", unsafe_allow_html=True)
 st.write("Upload a legal document PDF to generate a concise summary.")
 
-uploaded_file = st.file_uploader("Drag & Drop or Browse", type=["pdf"])
+uploaded_file = st.file_uploader(
+    "Drag & Drop or Browse PDF",
+    type=["pdf"]
+)
 
 if uploaded_file:
 
@@ -105,6 +113,7 @@ if uploaded_file:
         st.markdown("### 📄 Summary")
         st.info(summary)
 
+        # -------- DOWNLOAD SUMMARY --------
         summary_bytes = summary.encode("utf-8")
         b64 = base64.b64encode(summary_bytes).decode()
 
@@ -115,4 +124,3 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
-
