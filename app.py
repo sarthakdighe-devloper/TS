@@ -14,10 +14,9 @@ hf_token = os.getenv("HF_TOKEN")  # optional
 def load_summarizer():
     return pipeline(
         "summarization",
-        model="google/pegasus-xsum",  # lighter model for deployment
+        model="google/pegasus-xsum",
         device=-1
     )
-
 summarizer = load_summarizer()
 
 # ---------------- FUNCTION TO SET BACKGROUND IMAGE ----------------
@@ -124,5 +123,6 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
+
 
 
