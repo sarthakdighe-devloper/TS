@@ -14,7 +14,7 @@ hf_token = os.getenv("HF_TOKEN")  # optional
 def load_summarizer():
     return pipeline(
         "summarization",
-        model="sshleifer/distilbart-cnn-12-6",  # lighter model for deployment
+        model="facebook/bart-large-cnn",  # lighter model for deployment
         device=-1
     )
 
@@ -124,3 +124,4 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
+
