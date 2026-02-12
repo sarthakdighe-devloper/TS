@@ -1,127 +1,90 @@
 import os
-import base64
 import streamlit as st
 import pdfplumber
-from dotenv import load_dotenv
 from transformers import pipeline
+from dotenv import load_dotenv
 
 # ---------------- LOAD ENV VARIABLES ----------------
 load_dotenv()
-hf_token = os.getenv("HF_TOKEN")  # optional
 
-# ---------------- LOAD SUMMARIZER (CACHED) ----------------
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Text Summarizer",
+    page_icon="📝",
+    layout="wide"
+)
+
+st.title("📝 Text Document Summarizer")
+st.write("Upload a text or PDF document to generate a summary.")
+
+# ---------------- LOAD SUMMARIZER MODEL ----------------
 @st.cache_resource(show_spinner=False)
 def load_summarizer():
-    return pipeline(
-        "text2text-generation",   # ✅ Important change
-        model="google/flan-t5-base",
-        device=-1                 # CPU (use 0 if GPU available)
+    summarizer = pipeline(
+        "summarization",
+        model="facebook/bart-large-cnn"
     )
+    return summarizer
 
 summarizer = load_summarizer()
 
-# ---------------- FUNCTION TO SET BACKGROUND IMAGE ----------------
-def set_bg_image(image_file):
-    if not os.path.exists(image_file):
-        return
-
-    with open(image_file, "rb") as img:
-        encoded = base64.b64encode(img.read()).decode()
-
-    bg_style = f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/jpg;base64,{encoded}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-
-    .block-container {{
-        background-color: rgba(255,255,255,0.92);
-        padding: 20px;
-        border-radius: 10px;
-    }}
-
-    h1 {{
-        color: #0078FF;
-        text-align: center;
-    }}
-
-    .stButton>button {{
-        background-color: #0078FF;
-        color: white;
-        font-size: 18px;
-        padding: 10px;
-        border-radius: 5px;
-    }}
-    </style>
-    """
-    st.markdown(bg_style, unsafe_allow_html=True)
-
-# Background image
-set_bg_image("bg.jpg")
-
-# ---------------- PDF TEXT EXTRACTION ----------------
-def extract_text_from_pdf(uploaded_file):
+# ---------------- TEXT EXTRACTION FUNCTION ----------------
+def extract_text_from_pdf(file):
     text = ""
-    with pdfplumber.open(uploaded_file) as pdf:
+    with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
-    return text if text.strip() else None
+            text += page.extract_text() + "\n"
+    return text
 
-# ---------------- TEXT CLEAN + LIMIT SIZE ----------------
-def clean_text(text, max_chars=2500):  # slightly reduced for T5
-    text = text.replace("\n", " ")
-    return text[:max_chars]
-
-# ---------------- STREAMLIT UI ----------------
-st.markdown("<h1>Indian Legal Document Summarizer</h1>", unsafe_allow_html=True)
-st.write("Upload a legal document PDF to generate a concise summary.")
-
+# ---------------- FILE UPLOAD ----------------
 uploaded_file = st.file_uploader(
-    "Drag & Drop or Browse PDF",
-    type=["pdf"]
+    "Upload a TXT or PDF file",
+    type=["txt", "pdf"]
 )
 
-if uploaded_file:
+input_text = ""
 
-    with st.spinner("Extracting text from PDF..."):
-        text = extract_text_from_pdf(uploaded_file)
+if uploaded_file is not None:
 
-    if not text:
-        st.error("❌ No readable text found in PDF.")
+    if uploaded_file.type == "application/pdf":
+        input_text = extract_text_from_pdf(uploaded_file)
+
+    elif uploaded_file.type == "text/plain":
+        input_text = uploaded_file.read().decode("utf-8")
+
+    st.subheader("📄 Extracted Text")
+    st.text_area("", input_text, height=250)
+
+# ---------------- SUMMARY SETTINGS ----------------
+st.sidebar.header("Summary Settings")
+max_len = st.sidebar.slider("Max Summary Length", 50, 300, 150)
+min_len = st.sidebar.slider("Min Summary Length", 20, 100, 40)
+
+# ---------------- SUMMARIZATION ----------------
+if st.button("Generate Summary"):
+
+    if input_text.strip() == "":
+        st.warning("Please upload a file first.")
     else:
-        st.success("✅ Text extracted successfully!")
+        with st.spinner("Generating summary..."):
 
-        cleaned_text = clean_text(text)
+            # Limit input size for model
+            input_text = input_text[:3000]
 
-        # ✅ FLAN-T5 requires instruction prompt
-        prompt = f"Summarize the following legal document:\n\n{cleaned_text}"
-
-        with st.spinner("Summarizing document..."):
             summary = summarizer(
-                prompt,
-                max_length=200,
-                min_length=60,
+                input_text,
+                max_length=max_len,
+                min_length=min_len,
                 do_sample=False
-            )[0]["generated_text"]
+            )
 
-        st.markdown("### 📄 Summary")
-        st.info(summary)
+            st.subheader("✅ Summary")
+            st.success(summary[0]["summary_text"])
 
-        # -------- DOWNLOAD SUMMARY --------
-        summary_bytes = summary.encode("utf-8")
-        b64 = base64.b64encode(summary_bytes).decode()
-
-        download_link = f"""
-        <a href="data:file/txt;base64,{b64}" download="summary.txt">
-        📥 Download Summary
-        </a>
-        """
-
-        st.markdown(download_link, unsafe_allow_html=True)
-
+            # Download option
+            st.download_button(
+                label="Download Summary",
+                data=summary[0]["summary_text"],
+                file_name="summary.txt",
+                mime="text/plain"
+            )
