@@ -13,10 +13,11 @@ hf_token = os.getenv("HF_TOKEN")  # optional
 @st.cache_resource(show_spinner=False)
 def load_summarizer():
     return pipeline(
-        "summarization",
+        "text2text-generation",   # ✅ Important change
         model="google/flan-t5-large",
-        device=-1
+        device=-1                 # CPU (use 0 if GPU available)
     )
+
 summarizer = load_summarizer()
 
 # ---------------- FUNCTION TO SET BACKGROUND IMAGE ----------------
@@ -59,8 +60,7 @@ def set_bg_image(image_file):
     """
     st.markdown(bg_style, unsafe_allow_html=True)
 
-
-# Background image from project folder
+# Background image
 set_bg_image("bg.jpg")
 
 # ---------------- PDF TEXT EXTRACTION ----------------
@@ -73,12 +73,10 @@ def extract_text_from_pdf(uploaded_file):
                 text += extracted + "\n"
     return text if text.strip() else None
 
-
 # ---------------- TEXT CLEAN + LIMIT SIZE ----------------
-def clean_text(text, max_chars=3000):
+def clean_text(text, max_chars=2500):  # slightly reduced for T5
     text = text.replace("\n", " ")
     return text[:max_chars]
-
 
 # ---------------- STREAMLIT UI ----------------
 st.markdown("<h1>Indian Legal Document Summarizer</h1>", unsafe_allow_html=True)
@@ -101,13 +99,16 @@ if uploaded_file:
 
         cleaned_text = clean_text(text)
 
+        # ✅ FLAN-T5 requires instruction prompt
+        prompt = f"Summarize the following legal document:\n\n{cleaned_text}"
+
         with st.spinner("Summarizing document..."):
             summary = summarizer(
-                cleaned_text,
+                prompt,
                 max_length=200,
                 min_length=60,
                 do_sample=False
-            )[0]["summary_text"]
+            )[0]["generated_text"]
 
         st.markdown("### 📄 Summary")
         st.info(summary)
@@ -123,8 +124,3 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
-
-
-
-
-
