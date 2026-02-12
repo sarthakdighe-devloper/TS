@@ -47,9 +47,15 @@ st.set_page_config(
 set_bg_image("bg.jpg")
 
 
-st.title("📝 Text Document Summarizer")
-st.write("Upload a text or PDF document to generate a summary.")
-
+st.markdown(
+    """
+    <h1 style='color: white;'>📝 Text Document Summarizer</h1>
+    <p style='color: white; font-size:18px;'>
+        Upload a text or PDF document to generate a summary.
+    </p>
+    """,
+    unsafe_allow_html=True
+)
 # ---------------- LOAD SUMMARIZER MODEL ----------------
 @st.cache_resource(show_spinner=False)
 def load_summarizer():
@@ -121,5 +127,6 @@ if st.button("Generate Summary"):
                 file_name="summary.txt",
                 mime="text/plain"
             )
+
 
 
