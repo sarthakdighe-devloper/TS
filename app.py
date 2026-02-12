@@ -44,6 +44,8 @@ st.set_page_config(
     page_icon="📝",
     layout="wide"
 )
+set_bg_image("bg.jpg")
+
 
 st.title("📝 Text Document Summarizer")
 st.write("Upload a text or PDF document to generate a summary.")
@@ -119,4 +121,5 @@ if st.button("Generate Summary"):
                 file_name="summary.txt",
                 mime="text/plain"
             )
+
 
