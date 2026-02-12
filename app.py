@@ -1,3 +1,34 @@
+import base64
+
+# ---------------- BACKGROUND IMAGE FUNCTION ----------------
+def set_bg_image(image_file):
+    with open(image_file, "rb") as f:
+        encoded_string = base64.b64encode(f.read()).decode()
+
+    bg_style = f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{encoded_string}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
+
+    /* Optional: make text readable */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }}
+    </style>
+    """
+
+    st.markdown(bg_style, unsafe_allow_html=True)
 import os
 import streamlit as st
 import pdfplumber
@@ -88,3 +119,4 @@ if st.button("Generate Summary"):
                 file_name="summary.txt",
                 mime="text/plain"
             )
+
