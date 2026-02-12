@@ -1,7 +1,8 @@
 streamlit==1.31.0
 pdfplumber
 python-dotenv
-transformers==4.37.2
+transformers==4.36.2
 torch==2.1.2
 sentencepiece
 accelerate
+
