@@ -14,7 +14,7 @@ hf_token = os.getenv("HF_TOKEN")  # optional
 def load_summarizer():
     return pipeline(
         "text2text-generation",   # ✅ Important change
-        model="google/flan-t5-large",
+        model="google/flan-t5-base",
         device=-1                 # CPU (use 0 if GPU available)
     )
 
@@ -124,3 +124,4 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
+
