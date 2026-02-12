@@ -14,7 +14,7 @@ hf_token = os.getenv("HF_TOKEN")  # optional
 def load_summarizer():
     return pipeline(
         "summarization",
-        model="allenai/led-base-16384",
+        model="google/flan-t5-large",
         device=-1
     )
 summarizer = load_summarizer()
@@ -123,6 +123,7 @@ if uploaded_file:
         """
 
         st.markdown(download_link, unsafe_allow_html=True)
+
 
 
 
